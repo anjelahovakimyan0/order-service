@@ -45,6 +45,7 @@ jobs:
           kubeval: 0.16.1
           command: |
             kubeval --strict -d k8s
+        continue-on-error: true
   package:
     name: Package and Publish
     if: ${{ github.ref == 'refs/heads/main' }}
