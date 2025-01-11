@@ -15,12 +15,12 @@ jobs:
       security-events: write
     steps:
       - name: Checkout source code
-      - uses: actions/checkout@v4
+        uses: actions/checkout@v4
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          distribution: temurin
+          java-version: 17
           cache: gradle
       - name: Build, unit tests and integration tests
         run: |
@@ -35,9 +35,9 @@ jobs:
           severity-cutoff: high
       - name: Upload vulnerability report
         uses: github/codeql-action/upload-sarif@v2
-        if: sucess() || failures()
+        if: success() || failure()
         with:
-          sarif-file: ${{ steps.scan.outputs.sarif }}
+          sarif_file: ${{ steps.scan.outputs.sarif }}
       - name: Validate Kubernetes manifests
         uses: stefanprodan/kube-tools@v1
         with:
@@ -53,21 +53,22 @@ jobs:
     permissions:
       contents: read
       packages: write
+      security-events: write
     steps:
       - name: Checkout source code
-      - uses: actions/checkout@v4
+        uses: actions/checkout@v4
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          distribution: temurin
+          java-version: 17
           cache: gradle
       - name: Build container image
         run: |
           chmod +x gradlew
           ./gradlew bootBuildImage \
             --imageName ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
-      - name: OCI vulnerability scanning
+      - name: OCI image vulnerability scanning
         uses: anchore/scan-action@v3
         id: scan
         with:
@@ -76,14 +77,14 @@ jobs:
           severity-cutoff: high
       - name: Upload vulnerability report
         uses: github/codeql-action/upload-sarif@v2
-        if: sucess() || failures()
+        if: success() || failure()
         with:
-          sarif-file: ${{ steps.scan.outputs.sarif }}
+          sarif_file: ${{ steps.scan.outputs.sarif }}
       - name: Log into container registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ GITHUB_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish container image
         run: docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
